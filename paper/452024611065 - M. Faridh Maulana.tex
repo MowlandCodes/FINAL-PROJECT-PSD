@@ -1,0 +1,177 @@
+\documentclass[conference,a4paper]{IEEEtran}
+\usepackage{cite}
+\usepackage[indonesian]{babel}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\title{\textbf{Evaluasi Kinerja Filter Spasial Median dan Gaussian dalam Mereduksi Salt-and-Pepper serta Additive White Gaussian Noise pada Citra Digital}}
+
+\author{
+	\IEEEauthorblockN{\textbf{M. Faridh Maulana}}
+	\IEEEauthorblockA{
+    	\textit{Program Studi Teknik Informatika} \\
+    	\textit{Universitas Darussalam Gontor}\\
+		mfaridhmaulana47@student.cs.unida.gontor.ac.id
+	}
+}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+	Restorasi citra digital merupakan tahapan fundamental dalam pengolahan sinyal dan citra untuk memulihkan informasi visual yang terdegradasi oleh derau (noise). Penelitian ini bertujuan untuk mengevaluasi dan membandingkan performa filter spasial non-linear (Median Filter) dan linear (Gaussian Filter) dalam mereduksi dua jenis derau umum: Salt-and-Pepper Noise dan Additive White Gaussian Noise (AWGN). Eksperimen dirancang ke dalam tiga skenario utama dengan variasi ukuran kernel ($3\times3$, $5\times5$, dan $7\times7$). Evaluasi kuantitatif diukur menggunakan Mean Squared Error (MSE), Peak Signal-to-Noise Ratio (PSNR), dan Structural Similarity Index (SSIM). Hasil pengujian menunjukkan bahwa Median Filter $3\times3$ memberikan restorasi optimal terhadap Salt-and-Pepper noise dengan nilai PSNR 32.23 dB dan SSIM 0.9417, jauh melampaui Gaussian Filter yang hanya mencapai PSNR 26.14 dB dan SSIM 0.5692. Pada pengujian AWGN ($\sigma=25.0$), Gaussian Filter $5\times5$ menghasilkan trade-off optimal dengan MSE terendah ($107.37$) dan PSNR $27.82$ dB, sedangkan kernel $7\times7$ memberikan retensi kemiripan struktur tertinggi dengan SSIM $0.7480$.
+\end{abstract}
+
+\begin{IEEEkeywords}
+	digital image processing, spatial filtering, median filter, gaussian filter, PSNR, SSIM
+\end{IEEEkeywords}
+
+\section{Pendahuluan}
+Dalam sistem komputasi modern dan transmisi data visual, degradasi citra sering kali terjadi akibat ketidaksempurnaan sensor akuisisi, interferensi saluran transmisi, maupun fluktuasi termal pada perangkat keras. Kontaminasi derau (noise) ini secara signifikan menurunkan kualitas visual dan akurasi pada tahapan analisis citra lanjutan seperti segmentasi dan ekstraksi fitur.
+
+Pengolahan Sinyal Digital (PSD) pada domain spasial 2D menyediakan mekanisme filtering berbasis konvolusi diskrit untuk menekan komponen frekuensi tinggi tak diinginkan (derau) sekaligus mempertahankan struktur informasi penting seperti tepi dan kontur \cite{oppenheim1999}. Dua pendekatan filtering spasial yang umum digunakan adalah filter linear konvolutif, seperti \textit{Gaussian Filter}, dan filter non-linear berbasis perankingan statistik, seperti \textit{Median Filter}.
+
+Meskipun kedua metode tersebut populer, pemilihan parameter ukuran kernel ($k \times k$) serta kecocokan sifat filter terhadap karakteristik distribusi derau memerlukan analisis yang mendalam. Paper ini menyajikan studi komparatif dan eksperimen empiris terhadap kinerja kedua filter spasial tersebut di bawah variasi ukuran kernel dan jenis derau, dengan fokus pada integritas matematis serta metrik evaluasi objektif.
+
+Pengolahan Sinyal Digital (PSD) pada domain spasial 2D menyediakan mekanisme filtering untuk menekan komponen frekuensi tinggi tak diinginkan (derau) sekaligus mempertahankan struktur informasi penting (tepi dan kontur). Dua pendekatan filtering spasial yang umum digunakan adalah filter linear konvolutif, seperti \textit{Gaussian Filter}, dan filter non-linear berbasis perankingan statistik, seperti \textit{Median Filter}.
+
+Meskipun kedua metode tersebut populer, pemilihan parameter ukuran kernel ($k \times k$) serta kecocokan sifat filter terhadap karakteristik distribusi derau memerlukan analisis yang mendalam. Paper ini menyajikan studi komparatif dan eksperimen empiris terhadap kinerja kedua filter spasial tersebut di bawah variasi ukuran kernel dan jenis derau, dengan fokus pada integritas matematis serta metrik evaluasi objektif.
+
+\section{Penelitian Terkait}
+Penelitian mengenai reduksi derau spasial telah berkembang luas sejak formulasi dasar representasi matriks dan pemodelan degradasi citra dirumuskan secara komprehensif oleh Pratt \cite{pratt2007}. Gonzalez dan Woods \cite{gonzalez2018} menegaskan bahwa filter linier konvolusi bekerja dengan menghitung rata-rata tertimbang piksel sekitar, yang sangat efektif untuk derau dengan distribusi normal (Gaussian), namun rentan menghasilkan pengaburan (\textit{blurring}) pada area bergradien tinggi.
+
+Di sisi lain, Bovik \cite{bovik2005} mengemukakan bahwa derau impulsif (\textit{salt-and-pepper}) memiliki karakteristik diskrit ekstrem yang merusak estimasi linier. Filter non-linear, khususnya Median Filter yang diperkenalkan oleh Huang et al., terbukti superior dalam mengeliminasi nilai ekstrem tanpa mengubah nilai intensitas di sekitarnya secara drastis \cite{huang1979}. Penelitian terkini oleh Wang et al. \cite{wang2004ssim} menggarisbawahi pentingnya metrik SSIM di samping metrik berbasis galat mutlak seperti PSNR, guna menangkap degradasi struktural perseptual manusia pasca-pemrosesan filter spasial.
+
+\section{Metodologi}
+
+\subsection{Representasi Citra dan Model Derau}
+Citra digital monokromatik direpresentasikan sebagai matriks dua dimensi $f(x, y) \in \mathbb{R}^{M \times N}$, di mana $x$ dan $y$ adalah koordinat spasial diskrit, serta $f(x, y) \in [0, 255]$ menyatakan derajat keabuan (\textit{grayscale intensity}) \cite{pratt2007}.
+
+\textit{1) Salt-and-Pepper Noise:} Dimodelkan sebagai derau impuls biner independen dengan probabilitas kontaminasi $p$:
+\begin{equation}
+	g_{sp}(x, y) = \begin{cases}
+		0,       & \text{dengan probabilitas } p/2   \\
+		255,     & \text{dengan probabilitas } p/2   \\
+		f(x, y), & \text{dengan probabilitas } 1 - p
+	\end{cases}
+\end{equation}
+
+\textit{2) Additive White Gaussian Noise (AWGN):} Dimodelkan sebagai penambahan variabel acak Gaussian berdistribusi $\mathcal{N}(\mu, \sigma^2)$:
+\begin{equation}
+	g_{gauss}(x, y) = f(x, y) + \eta(x, y), \quad \eta \sim \mathcal{N}(0, \sigma^2)
+\end{equation}
+dengan batasan nilai piksel hasil dijaga pada rentang $[0, 255]$.
+
+\subsection{Metode Filtering Spasial}
+Operasi konvolusi spasial diskrit 2D diturunkan dari prinsip dasar pemrosesan sinyal diskrit \cite{oppenheim1999} dan didefinisikan sebagai:
+\begin{equation}
+	g(x, y) = \sum_{i=-a}^{a} \sum_{j=-b}^{b} h(i, j) f(x - i, y - j)
+\end{equation}
+di mana $h(i, j)$ merupakan kernel filter berukuran $(2a+1) \times (2b+1)$.
+
+\textit{1) Gaussian Filter:} Menggunakan kernel diskrit berbasis fungsi distribusi Gaussian 2D kontinu:
+\begin{equation}
+	h(i, j) = \frac{1}{2\pi\sigma_s^2} \exp\left( -\frac{i^2 + j^2}{2\sigma_s^2} \right)
+\end{equation}
+di mana $\sigma_s$ mengontrol deviasi standar penyebaran spasial kernel.
+
+\textit{2) Median Filter:} Merupakan operator non-linear yang menggantikan nilai piksel sentral dengan nilai median dari lingkungan spasial $S_{xy}$:
+\begin{equation}
+	\hat{f}(x, y) = \text{median}\left\{ g(s, t) \mid (s, t) \in S_{xy} \right\}
+\end{equation}
+
+\subsection{Metrik Evaluasi Kuantitatif}
+Kinerja restorasi dievaluasi menggunakan tiga metrik baku:
+
+\textit{1) Mean Squared Error (MSE):}
+\begin{equation}
+	\text{MSE} = \frac{1}{M \times N} \sum_{x=0}^{M-1} \sum_{y=0}^{N-1} \left[ f(x, y) - \hat{f}(x, y) \right]^2
+\end{equation}
+
+\textit{2) Peak Signal-to-Noise Ratio (PSNR):}
+\begin{equation}
+	\text{PSNR} = 10 \log_{10}\left( \frac{\text{MAX}_I^2}{\text{MSE}} \right) = 10 \log_{10}\left( \frac{255^2}{\text{MSE}} \right)
+\end{equation}
+
+\textit{3) Structural Similarity Index (SSIM):}
+\begin{equation}
+	\text{SSIM}(f, \hat{f}) = \frac{(2\mu_f\mu_{\hat{f}} + C_1)(2\sigma_{f\hat{f}} + C_2)}{(\mu_f^2 + \mu_{\hat{f}}^2 + C_1)(\sigma_f^2 + \sigma_{\hat{f}}^2 + C_2)}
+\end{equation}
+di mana $\mu, \sigma^2$, dan $\sigma_{f\hat{f}}$ secara berurutan merepresentasikan rata-rata lokal, varians, dan kovarians antara citra asli dan terestorasi.
+
+\section{Persiapan Eksperimen}
+Eksperimen diimplementasikan menggunakan Python 3.14.3 dengan library \texttt{NumPy}, \texttt{OpenCV}, dan \texttt{Scikit-Image} dalam lingkungan Jupyter Notebook. Citra uji standar beresolusi $256 \times 256$ piksel digunakan sebagai \textit{ground truth}. Tiga skenario pengujian dirancang:
+\begin{itemize}
+	\item \textbf{Skenario 1 (E1):} Restorasi citra terkontaminasi Salt-and-Pepper ($p=0.05$) menggunakan Median Filter dengan kernel $3\times3$, $5\times5$, dan $7\times7$.
+	\item \textbf{Skenario 2 (E2):} Restorasi citra terkontaminasi AWGN ($\sigma=25.0$) menggunakan Gaussian Filter ($\sigma_s=1.5$) dengan kernel $3\times3$, $5\times5$, dan $7\times7$.
+	\item \textbf{Skenario 3 (E3):} \textit{Stress-test} ketidakcocokan model (menerapkan Gaussian Filter linier pada Salt-and-Pepper noise $p=0.05$).
+\end{itemize}
+
+\section{Hasil dan Diskusi}
+Hasil eksperimen kuantitatif dari ketiga skenario dirangkum dalam Tabel \ref{tab:filtering_results}.
+
+\begin{table}[htbp]
+	\caption{Quantitative Evaluation of Spatial Filtering Across Scenarios}
+	\label{tab:filtering_results}
+	\centering
+	\resizebox{\columnwidth}{!}{%
+		\begin{tabular}{llcccc}
+			\toprule
+			\textbf{Skenario}                & \textbf{Metode} & \textbf{Kernel} & \textbf{MSE} & \textbf{PSNR (dB)} & \textbf{SSIM} \\
+			\midrule
+			Exp-1: Salt \& Pepper ($p=0.05$) & Median          & $3 \times 3$    & 38.87        & 32.23              & 0.9417        \\
+			Exp-1: Salt \& Pepper ($p=0.05$) & Median          & $5 \times 5$    & 85.02        & 28.84              & 0.8707        \\
+			Exp-1: Salt \& Pepper ($p=0.05$) & Median          & $7 \times 7$    & 117.35       & 27.44              & 0.8274        \\
+			\midrule
+			Exp-2: AWGN ($\sigma=25$)        & Gaussian        & $3 \times 3$    & 113.31       & 27.59              & 0.6138        \\
+			Exp-2: AWGN ($\sigma=25$)        & Gaussian        & $5 \times 5$    & 107.37       & 27.82              & 0.7229        \\
+			Exp-2: AWGN ($\sigma=25$)        & Gaussian        & $7 \times 7$    & 109.94       & 27.72              & 0.7480        \\
+			\midrule
+			Exp-3: Mismatch                  & Gaussian        & $3 \times 3$    & 158.23       & 26.14              & 0.5692        \\
+			Exp-3: Mismatch                  & Gaussian        & $5 \times 5$    & 130.74       & 26.97              & 0.6807        \\
+			Exp-3: Mismatch                  & Gaussian        & $7 \times 7$    & 129.59       & 27.01              & 0.7115        \\
+			\bottomrule
+		\end{tabular}%
+	}
+\end{table}
+
+\subsection{Analisis Reduksi Salt-and-Pepper Noise (Exp-1)}
+Pada Skenario 1, Median Filter $3\times3$ mendominasi performa restorasi dengan nilai PSNR tertinggi ($32.23$ dB), MSE terendah ($38.87$), dan SSIM superior sebesar $0.9417$. Mekanisme \textit{order-statistic} non-linear secara presisi mengeliminasi bit ekstrem ($0$ dan $255$) tanpa merusak piksel sekitarnya. Namun, terjadi fenomena \textit{oversmoothing} saat kernel diperbesar ke $5\times5$ dan $7\times7$; nilai PSNR anjlok berturut-turut menjadi $28.84$ dB dan $27.44$ dB, dengan SSIM yang terdegradasi ke $0.8274$ akibat hilangnya frekuensi spasial tinggi pada tepi objek.
+
+\subsection{Analisis Reduksi Gaussian Noise (Exp-2)}
+Pada degradasi AWGN ($\sigma=25.0$), Gaussian Filter $3\times3$ belum cukup optimal mereduksi varians noise (SSIM hanya $0.6138$). Kinerja terbaik dicapai oleh konfigurasi kernel $5\times5$ dengan MSE terendah ($107.37$) dan PSNR tertinggi ($27.82$ dB). Peningkatan ukuran jendela ke $7\times7$ mempertahankan kontinuitas struktural lebih baik dengan SSIM $0.7480$, meskipun sedikit mengorbankan MSE ($109.94$) akibat efek blur pada area transisi intensitas.
+
+\subsection{Analisis Stress-Test / Mismatch (Exp-3)}
+Skenario 3 membuktikan kelemahan fundamental filter linier konvolusi terhadap derau impulsif. Gaussian Filter $3\times3$ menghasilkan performa terburuk di seluruh pengujian dengan MSE mencapai $158.23$ dan SSIM hanya $0.5692$. Konvolusi averaging tidak membuang spike biner, melainkan menyebarkan energi impuls ke lingkungan lokal, menghasilkan artefak bercak kabur (\textit{smearing artifacts}). Walaupun kernel $7\times7$ sedikit menaikkan PSNR ke $27.01$ dB, kualitas visual tetap terdegradasi parah dibandingkan Median Filter pada Skenario 1.
+
+\section{Kesimpulan}
+Penelitian ini telah mendemonstrasikan evaluasi komparatif antara filter spasial Median dan Gaussian pada berbagai skenario derau citra digital. Median Filter $3\times3$ terbukti menjadi pendekatan paling efektif untuk mereduksi Salt-and-Pepper noise dengan metrik struktural SSIM tertinggi (0.9621). Sebaliknya, Gaussian Filter hanya optimal untuk Additive Gaussian Noise dan mengalami kegagalan struktural signifikan bila diterapkan pada impulse noise. Pemilihan ukuran kernel harus mempertimbangkan kompromi (\textit{trade-off}) antara efektivitas reduksi derau dan pelestarian ketajaman tepi citra. Pengembangan selanjutnya dapat mengeksplorasi filter adaptif seperti \textit{Adaptive Median Filter} atau \textit{Bilateral Filter} untuk menjaga detail tepi secara lebih presisi.
+
+\begin{thebibliography}{00}
+	\bibitem{gonzalez2018}
+	R. C. Gonzalez and R. E. Woods, \textit{Digital Image Processing}, 4th ed. New York, NY, USA: Pearson, 2018.
+
+	\bibitem{bovik2005}
+	A. C. Bovik, \textit{Handbook of Image and Video Processing}, 2nd ed. San Diego, CA, USA: Academic Press, 2005.
+
+	\bibitem{huang1979}
+	T. Huang, G. Yang, and G. Tang, ``A fast two-dimensional median filtering algorithm,'' \textit{IEEE Transactions on Acoustics, Speech, and Signal Processing}, vol. 27, no. 1, pp. 13--18, Feb. 1979.
+
+	\bibitem{wang2004ssim}
+	Z. Wang, A. C. Bovik, H. R. Sheikh, and E. P. Simoncelli, ``Image quality assessment: From error visibility to structural similarity,'' \textit{IEEE Transactions on Image Processing}, vol. 13, no. 4, pp. 600--612, Apr. 2004.
+
+	\bibitem{oppenheim1999}
+	A. V. Oppenheim and R. W. Schafer, \textit{Discrete-Time Signal Processing}, 2nd ed. Upper Saddle River, NJ, USA: Prentice Hall, 1999.
+
+	\bibitem{pratt2007}
+	W. K. Pratt, \textit{Digital Image Processing: PIKS Scientific Inside}, 4th ed. Hoboken, NJ, USA: John Wiley \& Sons, 2007.
+\end{thebibliography}
+
+\end{document}
