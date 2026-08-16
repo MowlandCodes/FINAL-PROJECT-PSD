@@ -8,3 +8,14 @@ wheels/
 
 # Virtual environments
 .venv
+
+.ipynb_checkpoints
+
+# Latex build artifacts
+*.aux
+*.log
+*.bcf
+*.fdb_latexmk
+*.fls
+*.run.xml
+*.synctex.gz
