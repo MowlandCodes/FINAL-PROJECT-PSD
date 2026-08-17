@@ -19,3 +19,4 @@ wheels/
 *.fls
 *.run.xml
 *.synctex.gz
+*.out
